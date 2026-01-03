@@ -64,3 +64,5 @@ services:
       replicas: 2
       restart_policy:
         condition: on-failure
+    ports:
+    - "80:5000"    

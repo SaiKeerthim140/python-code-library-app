@@ -1,41 +1,66 @@
 ---
-version: "3"
+version: "3.8"
+
+networks:
+  app_net:
+    driver: overlay
+    attachable: true
+
 services:
- db:
-   image: saikeerthim34/pythonapp:dbimage
-   ports:
-     - "3306:3306"
-   deploy:
-     replicas: 2
+  db:
+    image: saikeerthim34/pythonapp:dbimage
+    networks:
+      - app_net
+    deploy:
+      replicas: 2
+      restart_policy:
+        condition: on-failure
 
- auth_service:
-   image: saikeerthim34/pythonapp:authimage
-   ports:
-     - "5001:5001"
-   deploy:
-     replicas: 2
+  auth_service:
+    image: saikeerthim34/pythonapp:authimage
+    networks:
+      - app_net
+    depends_on:
+      - db
+    deploy:
+      replicas: 2
+      restart_policy:
+        condition: on-failure
 
- book_service:
-   image: saikeerthim34/pythonapp:bookimage
-   ports:
-     - "5002:5002"
-   deploy:
-     replicas: 2
-
+  book_service:
+    image: saikeerthim34/pythonapp:bookimage
+    networks:
+      - app_net
+    depends_on:
+      - auth_service
+      - db
+    deploy:
+      replicas: 2
+      restart_policy:
+        condition: on-failure
 
   borrow_service:
-   image: saikeerthim34/pythonapp:borrowimage
-   ports:
-     - "5003:5003"
-   deploy:
-     replicas: 2
-
+    image: saikeerthim34/pythonapp:borrowimage
+    networks:
+      - app_net
+    depends_on:
+      - auth_service
+      - book_service
+      - db
+    deploy:
+      replicas: 2
+      restart_policy:
+        condition: on-failure
 
   frontend:
-   image: saikeerthim34/pythonapp:frontend
-   ports:
-     - "5000:5000"
-   deploy:
-     replicas: 2   
-
-     
+    image: saikeerthim34/pythonapp:frontend
+    networks:
+      - app_net
+    depends_on:
+      - auth_service
+      - book_service
+      - borrow_service
+    deploy:
+      replicas: 2
+      restart_policy:
+        condition: on-failure
